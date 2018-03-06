@@ -10,6 +10,8 @@ import Image
 import ImageFont
 import ImageDraw
 import sys
+import os
+import urllib
 from PIL import Image
 
 def main():
@@ -24,14 +26,47 @@ def main():
             #data = [im.getpixel((x, y)) for x in range(im.width) for y in range(im.height)]
             #print(data)
         # Fetch images and shrinks them to the appropriate 8x8 size
-        elif sys.argv[1] == "--resize":
-            img = Image.open('img/saved_ging2.jpg')
-            new_img = img.resize((176,264))
-            new_img.save('img/saved_ging2.png','png')
-        elif sys.argv[1] == "--convert":
-            print("converting image")
-            im = Image.open("img/ging2.jpg").convert('L')
-            im.save("img/saved_ging2.jpg")
+        elif sys.argv[1] == "--fetch":
+            if len(sys.argv) == 3:
+                print("fetching and shrinking image")
+                search_phrase = sys.argv[2]
+                image_type = "all"
+                url = "https://pixabay.com/api/?key=" + getPixabayKey() + "&q=" + search_phrase + \
+                    "&image_type=all"
+                result = (requests.get(url)).json()
+                limit = 10
+                i=0
+
+                for hits in result["hits"]:
+                    url = hits["webformatURL"]
+                    output_path = "img/" + search_phrase
+                    output_path = output_path + "_" + str(i) + get_extension(url)
+                    print(url)
+                    urllib.urlretrieve(url, output_path.replace(" ", "_")) 
+
+                    # Convert image to correct size
+                    img = Image.open(output_path).convert('L')
+                    new_img = img.resize((176,264))
+                    new_img.save(output_path)
+                    i+=1
+                    if i==limit:
+                        break
+
+        elif sys.argv[1] == "--display":
+            print("displaying images in img folder")
+            epd = epd2in7b.EPD()
+            epd.init()
+            # clear the frame buffer
+            frame_black = [0] * (epd.width * epd.height / 8)
+            frame_red = [0] * (epd.width * epd.height / 8)
+            output_path = "img/"
+            for filename in os.listdir(output_path):
+                with open(output_path + "/" + filename) as img_file: 
+                    print(filename)
+                    frame_black = epd.get_frame_buffer(Image.open('img/' + filename))
+                    #frame_red = epd.get_frame_buffer(Image.open('red.bmp'))
+                    epd.display_frame(frame_black, frame_red)
+                    time.sleep(30)
         elif sys.argv[1] == "--weather":
             updateWeather()
     else:
@@ -85,6 +120,12 @@ def updateWeather(writeToFile = None):
 
 def getAppKey():
     return open('secret/openweather.txt', 'r').read()
+
+def getPixabayKey():
+    return open('secret/pixabay.txt', 'r').read()
+
+def get_extension(path_to_file):
+    return os.path.splitext(path_to_file)[1]
 
 if __name__ == "__main__":
     main()
