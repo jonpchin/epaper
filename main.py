@@ -40,7 +40,9 @@ def main():
                 for hits in result["hits"]:
                     url = hits["webformatURL"]
                     output_path = "img/" + search_phrase
-                    output_path = output_path + "_" + str(i) + get_extension(url)
+                    if not os.path.exists(output_path):
+                        os.makedirs(output_path)
+                    output_path = output_path + "/" + str(i) + get_extension(url)
                     print(url)
                     urllib.urlretrieve(url, output_path.replace(" ", "_")) 
 
@@ -60,10 +62,11 @@ def main():
             frame_black = [0] * (epd.width * epd.height / 8)
             frame_red = [0] * (epd.width * epd.height / 8)
             output_path = "img/"
-            for filename in os.listdir(output_path):
-                with open(output_path + "/" + filename) as img_file: 
+            folder = sys.argv[2]
+            for filename in os.listdir(output_path +"/" + folder):
+                with open(output_path + "/" + folder + "/" + filename) as img_file: 
                     print(filename)
-                    frame_black = epd.get_frame_buffer(Image.open('img/' + filename))
+                    frame_black = epd.get_frame_buffer(Image.open(output_path + "/" + folder + "/" + filename))
                     #frame_red = epd.get_frame_buffer(Image.open('red.bmp'))
                     epd.display_frame(frame_black, frame_red)
                     time.sleep(30)
@@ -105,18 +108,18 @@ def updateWeather(writeToFile = None):
     UNCOLORED = 0
 
     # draw strings to the buffer
-    #font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 18) 
-    #epd.draw_string_at(frame_black, 10, 20, time.strftime("%m/%d/%Y"), font, COLORED)
-    #epd.draw_string_at(frame_black, 10, 50, dayOfWeek, font, COLORED)
-    #epd.draw_string_at(frame_black, 10, 80, str(weatherData['main']['temp']) + u"\u00b0" + "F", font, COLORED)
-    #epd.draw_string_at(frame_red, 10, 110, weatherData['weather'][0]['description'], font, COLORED)
+    font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 18) 
+    epd.draw_string_at(frame_black, 10, 20, time.strftime("%m/%d/%Y"), font, COLORED)
+    epd.draw_string_at(frame_black, 10, 50, dayOfWeek, font, COLORED)
+    epd.draw_string_at(frame_black, 10, 80, str(weatherData['main']['temp']) + u"\u00b0" + "F", font, COLORED)
+    epd.draw_string_at(frame_red, 10, 110, weatherData['weather'][0]['description'], font, COLORED)
     # display the frames
-    #epd.display_frame(frame_black, frame_red)
+    epd.display_frame(frame_black, frame_red)
 
     # display images
-    frame_black = epd.get_frame_buffer(Image.open('img/saved_ging2.png'))
+    #frame_black = epd.get_frame_buffer(Image.open('img/saved_ging2.png'))
     #frame_red = epd.get_frame_buffer(Image.open('red.bmp'))
-    epd.display_frame(frame_black, frame_red)
+    #epd.display_frame(frame_black, frame_red)
 
 def getAppKey():
     return open('secret/openweather.txt', 'r').read()
